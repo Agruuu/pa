@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaTaskAppealDao">
+    
+	<sql id="opaTaskAppealColumns">
+		a.id AS "id",
+		a.plan_id AS "planId",
+		a.office_id AS "office.id",
+		a.task_id AS "taskId",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.score AS "score",
+		a.count AS "count",
+		a.result AS "result",
+		a.attached_path AS "attachedPath",
+		a.appeal_score AS "appealScore",
+		a.appeal_result AS "appealResult",
+		a.appeal_reason AS "appealReason",
+		a.return_reason AS "returnReason",
+		a.appeal_path AS "appealPath",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		o3.name AS "office.name",
+		a.auditor_office_id AS "auditorOfficeId",
+		oa.name AS "auditorOfficeName"
+	</sql>
+	
+	<sql id="opaTaskAppealJoins">
+		LEFT JOIN sys_office o3 ON o3.id = a.office_id
+		LEFT JOIN sys_office oa ON oa.id = a.auditor_office_id
+	</sql>
+    
+	<select id="get" resultType="OpaTaskAppeal">
+		SELECT 
+			<include refid="opaTaskAppealColumns"/>
+		FROM opa_task_appeal a
+		<include refid="opaTaskAppealJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OpaTaskAppeal">
+		SELECT 
+			<include refid="opaTaskAppealColumns"/>
+		FROM opa_task_appeal a
+		<include refid="opaTaskAppealJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="code != null and code != ''">
+				AND a.code = #{code}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="ifNum != null and ifNum != ''">
+				AND a.if_num = #{ifNum}
+			</if>
+			<if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			<if test="score !=null and score !=''">
+			    AND a.score = #{score}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OpaTaskAppeal">
+		SELECT 
+			<include refid="opaTaskAppealColumns"/>
+		FROM opa_task_appeal a
+		<include refid="opaTaskAppealJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO opa_task_appeal(
+			id,
+			plan_id,
+			office_id,
+			task_id,
+			code,
+			name,
+			type,
+			method,
+			if_num,
+			value,
+			score,
+			count,
+			result,
+			attached_path,
+			appeal_score,
+			appeal_result,
+			appeal_reason,
+			return_reason,
+			appeal_path,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			remarks,
+			auditor_office_id
+		) VALUES (
+			#{id},
+			#{planId},
+			#{office.id},
+			#{taskId},
+			#{code},
+			#{name},
+			#{type},
+			#{method},
+			#{ifNum},
+			#{value},
+			#{score},
+			#{count},
+			#{result},
+			#{attachedPath},
+			#{appealScore},
+			#{appealResult},
+			#{appealReason},
+			#{returnReason},
+			#{appealPath},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditorId},
+			#{status},
+			#{remarks},
+			#{auditorOfficeId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_task_appeal SET 	
+			plan_id = #{planId},
+			office_id = #{office.id},
+			task_id = #{taskId},
+			code = #{code},
+			name = #{name},
+			type = #{type},
+			method = #{method},
+			if_num = #{ifNum},
+			value = #{value},
+			score = #{score},
+			count = #{count},
+			result = #{result},
+			attached_path = #{attachedPath},
+			appeal_score = #{appealScore},
+			appeal_result = #{appealResult},
+			appeal_reason = #{appealReason},
+			return_reason = #{returnReason},
+			appeal_path = #{appealPath},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditorId},
+			status = #{status},
+			remarks = #{remarks},
+			auditor_office_id = #{auditorOfficeId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_task_appeal SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findListByStatus" resultType="com.orhon.pa.common.utils.Status">
+		SELECT 
+			<include refid="opaTaskAppealColumns"/>
+		FROM opa_task_appeal a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND
+			a.status IN
+			<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+				#{status}  
+			</foreach> 
+		</where>
+			ORDER BY a.update_date DESC
+			
+	</select>
+	<select id="findNotPassList" resultType="OpaTaskAppeal">
+		SELECT 
+			<include refid="opaTaskAppealColumns"/>
+		FROM opa_task_appeal a
+		<include refid="opaTaskAppealJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status != #{status}
+			</if>
+		</where>
+	</select>
+</mapper>

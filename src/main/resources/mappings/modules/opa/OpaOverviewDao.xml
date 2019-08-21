@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaOverviewDao">
+    
+	<sql id="opaOverviewColumns">
+		a.id AS "id",
+		a.scheme_id AS "schemeId",
+		a.depart_id AS "departId",
+		a.item_id AS "itemId",
+		a.code AS "code",
+		a.year_result AS "yearResult",
+		a.convert_score AS "convertScore",
+		a.leading_score AS "leadingScore",
+		a.county_score AS "countyScore",
+		a.peer_review AS "peerReview",
+		a.leadership_assessment AS "leadershipAssessment",
+		a.service_rating AS "serviceRating",
+		a.assessment_score AS "assessmentScore",
+		a.overall_score AS "overallScore",
+		a.annual_score AS "annualScore",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.dai_score AS "daiScore",
+		a.office_id AS "office.id",
+	    a.level AS "level",
+		e.name AS "office.name",
+		m.id AS "sId",
+		m.name AS "schemeName"
+	</sql>
+	
+	<sql id="opaOverviewJoins">
+	LEFT JOIN sys_office e on e.id=a.office_id
+	LEFT JOIN opa_scheme m on m.office_id=a.office_id
+	</sql>
+    
+	<select id="get" resultType="OpaOverview">
+		SELECT 
+			<include refid="opaOverviewColumns"/>
+		FROM opa_overview a
+		<include refid="opaOverviewJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<select id="getOverview" resultType="OpaOverview">
+	SELECT
+	 <include refid="opaOverviewColumns"/>
+	 FROM opa_overview a
+	 <include refid="opaOverviewJoins"/>
+	 WHERE a.scheme_id = #{schemeId}
+	</select>
+	<select id="getView" resultType="OpaOverview">
+		SELECT 
+			<include refid="opaOverviewColumns"/>
+		FROM opa_overview a
+		<include refid="opaOverviewJoins"/>
+		WHERE m.office_id = #{officeId}
+	</select>
+	
+	<select id="findList" resultType="OpaOverview">
+		SELECT 
+			<include refid="opaOverviewColumns"/>
+		FROM opa_overview a
+		<include refid="opaOverviewJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OpaOverview">
+		SELECT 
+			<include refid="opaOverviewColumns"/>
+		FROM opa_overview a
+		<include refid="opaOverviewJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	<insert id="insert">
+		INSERT INTO opa_overview(
+			id,
+			scheme_id,
+			depart_id,
+			code,
+			year_result,
+			leading_score,
+			county_score,
+			peer_review,
+			leadership_assessment,
+			service_rating,
+			assessment_score,
+			overall_score,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			dai_score,
+			office_id,
+			level
+		) VALUES (
+			#{id},
+			#{schemeId},
+			#{departId},
+			#{code},
+			#{yearResult},
+			#{leadingScore},
+			#{countyScore},
+			#{peerReview},
+			#{leadershipAssessment},
+			#{serviceRating},
+			#{assessmentScore},
+			#{overallScore},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{daiScore},
+			#{office.id},
+			#{level}
+		)
+	</insert>
+	
+	
+	<insert id="OverInsert">
+		INSERT INTO opa_overview(
+			id,
+			scheme_id,
+			depart_id,
+			code,
+			year_result,
+			leading_score,
+			county_score,
+			peer_review,
+			leadership_assessment,
+			service_rating,
+			assessment_score,
+			overall_score,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			dai_score,
+			office_id,
+			level
+		) VALUES (
+			#{id},
+			#{schemeId},
+			#{departId},
+			#{code},
+			#{yearResult},
+			#{leadingScore},
+			#{countyScore},
+			#{peerReview},
+			#{leadershipAssessment},
+			#{serviceRating},
+			#{assessmentScore},
+			#{overallScore},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{daiScore},
+			#{office.id},
+			#{level}
+		)
+	</insert>
+	
+	
+	
+
+	<update id="update">
+		UPDATE opa_overview SET 	
+			scheme_id = #{schemeId},
+			code = #{code},
+			year_result = #{yearResult},
+			leading_score = #{leadingScore},
+			county_score = #{countyScore},
+			peer_review = #{peerReview},
+			leadership_assessment = #{leadershipAssessment},
+			service_rating = #{serviceRating},
+			assessment_score = #{assessmentScore},
+			overall_score = #{overallScore},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			dai_score = #{daiScore},
+			office_id =#{office.id},
+			level=#{level}
+	    	WHERE id = #{id}
+	</update>
+	
+	<update id="Overupdate">
+		UPDATE opa_overview SET 	
+			scheme_id = #{schemeId},
+			code = #{code},
+			year_result = #{yearResult},
+			leading_score = #{leadingScore},
+			county_score = #{countyScore},
+			peer_review = #{peerReview},
+			leadership_assessment = #{leadershipAssessment},
+			service_rating = #{serviceRating},
+			assessment_score = #{assessmentScore},
+			overall_score = #{overallScore},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			dai_score = #{daiScore},
+			office_id =#{office.id},
+			level=#{level}
+	    	WHERE id = #{id}
+	</update>
+	
+	
+	<update id="delete">
+		UPDATE opa_overview SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+  <delete id="deleteDelFlag">
+      DELETE FROM opa_overview
+       WHERE del_flag="3"
+  </delete>
+</mapper>

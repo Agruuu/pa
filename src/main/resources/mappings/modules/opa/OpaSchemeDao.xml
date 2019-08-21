@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaSchemeDao">
+    
+    <!-- 
+    item_parent_id;父级指标编号
+			code ;编码
+			name ;名称
+			level;深度
+			date_from;起始日期
+			date_to;
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditor.id},
+			status = #{status},
+			remarks = #{remarks}
+     -->
+	<sql id="opaSchemeColumns">
+		a.id AS "id",
+		a.item_parent_id AS "itemParent.id",
+		a.code AS "code",
+		a.name AS "name",
+		a.level AS "level",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditor.id",
+		a.status AS "status",
+	    a.remarks AS "remarks",  
+	    a.examination AS "examination", 
+	    a.office_id AS "officeId",
+		u.name AS "auditor.name",
+		i.name AS "itemParent.name"
+	</sql>
+	
+	<sql id="opaSchemeJoins">
+		LEFT JOIN sys_office o ON o.id = a.item_parent_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_id
+		LEFT JOIN opa_item i ON i.id = a.item_parent_id
+	</sql>
+    
+	<select id="get" resultType="com.orhon.pa.modules.opa.entity.OpaScheme">
+		SELECT 
+			<include refid="opaSchemeColumns"/>
+		FROM opa_scheme a
+		<include refid="opaSchemeJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="com.orhon.pa.modules.opa.entity.OpaScheme">
+		SELECT 
+			<include refid="opaSchemeColumns"/>
+		FROM opa_scheme a
+		<include refid="opaSchemeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="dateFrom != null and dateFrom != ''">
+				AND a.date_from &gt;= #{dateFrom}
+			</if>
+			<if test="dateTo != null and dateTo != ''">
+				AND a.date_to &lt;= #{dateTo}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			<if test="auditor != null and auditor != ''">
+				AND a.auditor_id = #{auditor.id}
+			</if>
+			<!--  <if test='createBy !="1" and createBy !=null and createBy !=""'>
+			    AND a.create_by=#{createBy.id}
+			 </if> -->
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="com.orhon.pa.modules.opa.entity.OpaScheme">
+		SELECT 
+			<include refid="opaSchemeColumns"/>
+		FROM opa_scheme a
+		<include refid="opaSchemeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert" >
+		INSERT INTO opa_scheme(
+			id,
+			item_parent_id,
+			code,
+			name,
+			level,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			examination,
+			remarks,
+			office_id
+		) VALUES (
+			#{id},
+			#{itemParent.id},
+			#{code},
+			#{name},
+			#{level},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditor.id},
+			#{status},
+			#{examination},
+			#{remarks},
+			#{officeId}
+		)
+	</insert>
+	
+	
+	
+	<update id="update" parameterType="com.orhon.pa.modules.opa.entity.OpaScheme">
+		 UPDATE opa_scheme SET 	
+			item_parent_id = #{itemParent.id},
+			code = #{code},
+			name = #{name},
+			level = #{level},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditor.id},
+			status = #{status},
+			examination=#{examination},
+			remarks = #{remarks},
+			office_id = #{officeId}
+		WHERE id = #{id} 
+	</update>
+	<update id="updateStatus" parameterType="com.orhon.pa.modules.opa.entity.OpaScheme">
+	      UPDATE opa_scheme SET
+	      <if test="status != null and status != ''">
+				 status= #{status}
+		</if>
+		WHERE id=#{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_scheme SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findListByStatus" resultType="com.orhon.pa.common.utils.Status">
+		SELECT 
+			a.id AS value,
+			a.name AS label
+		FROM opa_scheme a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND
+			a.status IN
+			<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+				#{status}  
+			</foreach> 
+		</where>
+			ORDER BY a.update_date DESC
+	</select>
+	
+	
+	<select id="findlistByStatus2" resultType="com.orhon.pa.common.utils.Status">
+		SELECT 
+			a.id AS value,
+			a.name AS label
+		FROM opa_scheme a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND
+			a.status IN
+			<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+				#{status}  
+			</foreach> 
+			<if test="auditor != null and auditor != ''">
+				AND a.auditor_id = #{auditor.id}
+			</if>
+		</where>
+			ORDER BY a.update_date DESC
+	</select>
+	
+	
+	
+	<select id="findlistByStatus1" resultType="com.orhon.pa.common.utils.Status">
+		SELECT
+		  a.id AS value,
+		  a.name AS label,
+		  a.office_id AS officeId
+		FROM opa_scheme a
+	<where>
+	   a.del_flag = #{DEL_FLAG_NORMAL}
+	   <if test=" createBy !=null and createBy !=''">
+			  AND a.create_by=#{createBy}
+	   </if>
+	  AND
+	   a.status IN
+	<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+			#{status}  
+	</foreach> 
+		</where>
+			ORDER BY a.update_date DESC
+	</select>
+	
+	
+	
+	<select id="zhibiaoName" resultType="com.orhon.pa.common.utils.Status">
+		SELECT
+		  a.id AS value,
+		  a.name AS label,
+		  a.office_id AS officeId
+		FROM opa_scheme a
+		LEFT JOIN opa_plan_task k ON k.PLAN_ID=a.ID
+	<where>
+	   a.del_flag = #{DEL_FLAG_NORMAL}
+	   <if test="auditorId != null and auditorId != ''">
+		AND k.auditor_id = #{auditorId}
+	    </if>
+	  AND
+	   a.status IN
+	<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+			#{status}  
+	</foreach> 
+		</where>
+			ORDER BY a.update_date DESC
+	</select>
+	
+	
+	
+	
+	
+	
+	<!--<update id="updateOpaScheme">-->
+		<!--UPDATE opa_scheme SET -->
+		<!--WHERE id = #{id}-->
+	<!--</update>-->
+</mapper>

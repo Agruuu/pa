@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaPlanOfficeDao">
+    
+	<sql id="opaPlanOfficeColumns">
+		a.id AS "id",
+		a.plan_id AS "planId",
+		a.office_id AS "office.id",
+		a.office_parent_id AS "officeParentId",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		o3.name AS "office.name",
+		o4.name AS "officeParentName"
+	</sql>
+	
+	<sql id="opaPlanOfficeJoins">
+		LEFT JOIN sys_office o3 ON o3.id = a.office_id
+		LEFT JOIN sys_office o4 ON o4.id = a.office_parent_id
+	</sql>
+    
+	<select id="get" resultType="OpaPlanOffice">
+		SELECT 
+			<include refid="opaPlanOfficeColumns"/>
+		FROM opa_plan_office a
+		<include refid="opaPlanOfficeJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<select id="findOffice" resultType="OpaPlanOffice">
+	select 
+a.id as "Id",
+a.OFFICE_ID as "officeID",
+e.name as "zhibiaoName",
+o.name as "officeName"
+from opa_plan_office a
+left join opa_scheme e on e.id = a.PLAN_ID
+left join sys_office o on o.id = a.office_id
+where a.del_flag = #{DEL_FLAG_NORMAL} 
+and a.plan_id=#{id}
+	</select>
+	<select id="findList" resultType="OpaPlanOffice">
+		SELECT 
+			<include refid="opaPlanOfficeColumns"/>
+		FROM opa_plan_office a
+		<include refid="opaPlanOfficeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="officeParent != null and officeParent.id != null and officeParent.id != ''">
+				AND a.office_parent_id = #{officeParent.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	<select id="findList1" resultType="OpaPlanOffice">
+		SELECT 
+			<include refid="opaPlanOfficeColumns"/>
+		FROM opa_plan_office a
+		LEFT JOIN sys_user o3 ON o3.id = a.office_id
+		LEFT JOIN sys_office o4 ON o4.id = a.office_parent_id
+		LEFT JOIN summary_office_role e on e.Association_office_id = a.office_id
+		<where>
+			a.del_flag = 0
+			<if test="Identificationsymbo != null and Identificationsymbo != ''">
+				AND e.Identification_symbo = #{Identificationsymbo}
+			</if>
+		</where>
+				GROUP BY a.OFFICE_ID
+	</select>
+	
+	<select id="findAllList" resultType="OpaPlanOffice">
+		SELECT 
+			<include refid="opaPlanOfficeColumns"/>
+		FROM opa_plan_office a
+		<include refid="opaPlanOfficeJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO opa_plan_office(
+			id,
+			plan_id,
+			office_id,
+			office_parent_id,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks
+		) VALUES (
+			#{id},
+			#{planId},
+			#{office.id},
+			#{officeParentId},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks}
+		)
+	</insert>
+	
+	<insert id="insert1">
+		INSERT INTO opa_plan_office(
+			id,
+			plan_id,
+			office_id,
+			office_parent_id,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks
+		) VALUES (
+			#{id},
+			#{planId},
+			#{officeId},
+			#{officeParentId},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_plan_office SET 	
+			plan_id = #{planId},
+			office_id = #{office.id},
+			office_parent_id = #{officeParentId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_plan_office SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

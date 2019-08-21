@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaLeadershipAssessmentDao">
+    
+	<sql id="opaLeadershipAssessmentColumns">
+		a.id AS "id",
+		a.office_id AS "office.id",
+		a.item_parent_id AS "itemParentId",
+		a.code AS "code",
+		a.name AS "name",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.democratic_assessment AS "democraticAssessment",
+		a.social_assessment AS "socialAssessment",
+		a.germany_assessment AS "germanyAssessment",
+		a.conversation_assessment AS "conversationAssessment",
+		a.department_assessment AS "departmentAssessment",
+		a.normal_assessment AS "normalAssessment",
+		a.department_id AS "departmentId",
+		a.status AS "status",
+		a.user_id AS "user",
+		o.name AS "office.name",
+		u.name AS "user.name",
+		o18.name AS "office1.name",
+		c.name AS "company.name",
+    	c.parent_id AS "company.parent.id",
+    	c.parent_ids AS "company.parentIds",
+    	ca.id AS "company.area.id",
+    	ca.name AS "company.area.name",
+    	ca.parent_id AS "company.area.parent.id",
+    	ca.parent_ids AS "company.area.parentIds",
+    	o.parent_id AS "office.parent.id",
+    	o.parent_ids AS "office.parentIds",
+    	oa.id AS "office.area.id",
+    	oa.name AS "office.area.name",
+    	oa.parent_id AS "office.area.parent.id",
+    	oa.parent_ids AS "office.area.parentIds",
+    	cu.id AS "company.primaryPerson.id",
+    	cu.name AS "company.primaryPerson.name",
+    	cu2.id AS "company.deputyPerson.id",
+    	cu2.name AS "company.deputyPerson.name",
+    	ou.id AS "office.primaryPerson.id",
+    	ou.name AS "office.primaryPerson.name",
+    	ou2.id AS "office.deputyPerson.id",
+    	ou2.name AS "office.deputyPerson.name"
+	</sql>
+	
+	<sql id="opaLeadershipAssessmentJoins111">
+	    LEFT JOIN sys_office o18 ON o18.id = a.office_id
+		LEFT JOIN sys_opaleadershipassessment_role ur ON ur.opaLeadershipassessment_id = a.id
+        LEFT JOIN sys_role r ON r.id = ur.role_id 
+    </sql>
+	
+	<sql id="opaLeadershipAssessmentJoins">
+	    LEFT JOIN sys_office o18 ON o18.id = a.office_id
+	    LEFT JOIN sys_office c ON c.id = a.company_id
+	    LEFT JOIN sys_area ca  ON ca.id = c.area_id
+	    LEFT JOIN sys_office o ON o.id = a.office_id
+	    LEFT JOIN sys_area oa ON oa.id = o.area_id
+		LEFT JOIN sys_user u ON u.id = a.user_id
+		LEFT JOIN opa_leadership_assessment cu ON cu.id = c.primary_person
+		LEFT JOIN opa_leadership_assessment cu2 ON cu2.id = c.deputy_person
+		LEFT JOIN opa_leadership_assessment ou ON ou.id = o.primary_person
+		LEFT JOIN opa_leadership_assessment ou2 ON ou2.id = o.deputy_person
+		
+	</sql>
+    
+	<select id="get" resultType="OpaLeadershipAssessment">
+		SELECT 
+			<include refid="opaLeadershipAssessmentColumns"/>
+		FROM opa_leadership_assessment a
+		<include refid="opaLeadershipAssessmentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OpaLeadershipAssessment">
+		SELECT 
+			<include refid="opaLeadershipAssessmentColumns"/>
+			,SUM(
+		    a.DEMOCRATIC_ASSESSMENT+
+            a.SOCIAL_ASSESSMENT+
+            a.GERMANY_ASSESSMENT+
+            a.CONVERSATION_ASSESSMENT+
+            a.NORMAL_ASSESSMENT+
+            a.DEPARTMENT_ASSESSMENT
+            )as allscore
+		FROM opa_leadership_assessment a
+		JOIN sys_opaleadershipassessment_role ur ON ur.opaLeadershipassessment_id =a.id and ur.role_id=a.ITEM_PARENT_ID
+		<include refid="opaLeadershipAssessmentJoins"/>
+		
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+			    AND (o.id = #{office.id} OR o.parent_ids LIKE 
+					<if test="dbName == 'oracle'">'%,'||#{office.id}||',%')</if>
+					<if test="dbName == 'mssql'">'%,'+#{office.id}+',%')</if>
+					<if test="dbName == 'mysql'">CONCAT('%,', #{office.id}, ',%'))</if>
+		   </if>
+		</where>
+		<!-- 数据范围过滤 -->
+		${sqlMap.dsf}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				<!-- ORDER BY a.update_date DESC -->
+				group by name
+                order by allscore desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListFeedback" resultType="OpaLeadershipAssessment">
+	SELECT 
+			<include refid="opaLeadershipAssessmentColumns"/>
+			,SUM(
+		    a.DEMOCRATIC_ASSESSMENT+
+            a.SOCIAL_ASSESSMENT+
+            a.GERMANY_ASSESSMENT+
+            a.CONVERSATION_ASSESSMENT+
+            a.NORMAL_ASSESSMENT+
+            a.DEPARTMENT_ASSESSMENT
+            )as allscore
+		FROM opa_leadership_assessment a
+		JOIN sys_opaleadershipassessment_role ur ON ur.opaLeadershipassessment_id =a.id and ur.role_id=a.ITEM_PARENT_ID
+		<include refid="opaLeadershipAssessmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} 
+			and a.user_id=#{user}
+		</where>	
+			<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				<!-- ORDER BY a.update_date DESC -->
+				group by name
+                order by allscore desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	
+	
+	<select id="findAllList" resultType="OpaLeadershipAssessment">
+		SELECT 
+			<include refid="opaLeadershipAssessmentColumns"/>
+		FROM opa_leadership_assessment a
+		<include refid="opaLeadershipAssessmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 删除用户和角色关联表数据 -->
+	<delete id="deleteUserRole">
+		DELETE FROM sys_opaleadershipassessment_role WHERE opaLeadershipassessment_id = #{id}
+	</delete>
+	
+	<!-- 插入用户和角色关联表数据 -->
+	<insert id="insertUserRole">
+		INSERT INTO sys_opaleadershipassessment_role(opaLeadershipassessment_id, role_id)
+		<foreach collection="roleList" item="role" separator=" union all ">
+			SELECT #{id}, #{role.id}
+			<if test="dbName != 'mssql'">
+			FROM dual
+			</if>
+		</foreach>
+	</insert>
+	<insert id="insert1">
+		INSERT INTO opa_leadership_assessment(ITEM_PARENT_ID)
+		<foreach collection="roleList" item="role" separator=" union all ">
+			SELECT #{role.id}
+			<if test="dbName != 'mssql'">
+			FROM dual
+			</if>
+		</foreach>
+	</insert>
+	<update id="update1">
+	update opa_leadership_assessment set
+	<foreach collection="roleList" item="role" separator=" union all ">
+	 ITEM_PARENT_ID=#{role.id}
+	</foreach>
+	where id=#{id}
+	</update>
+	
+	<insert id="insert">
+		INSERT INTO opa_leadership_assessment(
+			id,
+		    office_id,
+		    user_id,
+			code,
+			name,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			democratic_assessment,
+			social_assessment,
+			germany_assessment,
+			conversation_assessment,
+			department_assessment,
+			normal_assessment,
+			department_id,
+			company_id,
+			item_parent_id,
+			status
+		) VALUES (
+			#{id},
+		   	#{office.id},
+		   	#{user.id},
+			#{code},
+			#{name},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{democraticAssessment},
+			#{socialAssessment},
+			#{germanyAssessment},
+			#{conversationAssessment},
+			#{departmentAssessment},
+			#{normalAssessment},
+			#{departmentId},
+			#{company.id},
+			#{itemParentId},
+			#{status}
+		)
+	</insert>
+	
+	<update id="update" >
+		UPDATE opa_leadership_assessment SET 	
+			office_id =#{office.id},
+			code = #{code},
+			name = #{name},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			democratic_assessment = #{democraticAssessment},
+			social_assessment = #{socialAssessment},
+			germany_assessment = #{germanyAssessment},
+			conversation_assessment = #{conversationAssessment},
+			department_assessment = #{departmentAssessment},
+			normal_assessment = #{normalAssessment},
+			department_id = #{departmentId},
+			item_parent_id = #{itemParentId},
+			company_id = #{company.id},
+			status = #{status}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_leadership_assessment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<select id="assessmentList" resultType="com.orhon.pa.modules.opa.entity.OpaLeadershipAssessment">
+	SELECT
+	a.id AS "id",
+	a.office_id AS "office.id",
+	a.item_parent_id AS "itemParentId",
+	a.code AS "code",
+	a.name AS "name",
+	a.create_by AS "createBy.id",
+	a.create_date AS "createDate",
+	a.update_by AS "updateBy.id",
+	a.update_date AS "updateDate",
+	a.remarks AS "remarks",
+	a.del_flag AS "delFlag",
+	a.democratic_assessment AS "democraticAssessment",
+	a.social_assessment AS "socialAssessment",
+	a.germany_assessment AS "germanyAssessment",
+	a.conversation_assessment AS "conversationAssessment",
+	a.department_assessment AS "departmentAssessment",
+	a.normal_assessment AS "normalAssessment",
+	a.status AS "status",
+	ifnull(SUM(
+	a.DEMOCRATIC_ASSESSMENT + 
+    a.SOCIAL_ASSESSMENT +
+    a.GERMANY_ASSESSMENT +
+    a.CONVERSATION_ASSESSMENT + 
+    a.NORMAL_ASSESSMENT + 
+    a.DEPARTMENT_ASSESSMENT
+	),"")AS allscore,
+	 IFNULL(a.user_id,"") AS userId, 
+	e.name AS "office.name"
+	FROM opa_leadership_assessment a
+	LEFT JOIN sys_office e ON e.id=a.office_id
+	<where>
+	 a.del_flag = #{DEL_FLAG_NORMAL}  
+	<!-- and a.user_id=#{id} -->
+	<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+	</if>
+	</where>
+	<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				<!-- ORDER BY a.update_date DESC -->
+				group by name
+                order by allscore desc
+			</otherwise>
+		</choose>
+	</select>
+	
+	<update id="updateStatus">
+		UPDATE opa_leadership_assessment SET 
+			del_flag = #{DEL_FLAG_NORMAL},
+			item_parent_id = #{itemParentId},
+			status=#{status}
+	</update>
+</mapper>

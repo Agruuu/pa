@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaSchemeItemDao">
+    
+	<sql id="opaSchemeItemColumns">
+		a.id AS "id",
+		a.scheme_id AS "schemeId",
+		a.item_id AS "itemId",
+		a.item_parent_id AS "itemParentId",
+		a.item_parent_ids AS "itemParentIds",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.level AS "level",
+		a.content AS "content",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.count AS "count",
+		a.sort AS "sort",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		s.name AS "schemeName",
+		u.name AS "auditorName",
+		a.auditor_office_id AS "auditorOfficeId",
+		a.examination AS"examination", 
+		oa.name AS "auditorOfficeName"
+	</sql>
+	
+	<sql id="opaSchemeItemJoins">
+		LEFT JOIN opa_scheme s ON s.id = a.scheme_id
+		LEFT JOIN sys_office oa ON oa.id = a.auditor_office_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_office_id
+	</sql>
+    
+	<select id="get" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getParentSchemeItem" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		WHERE  
+			a.scheme_id = #{schemeId} and a.name=#{name}
+		AND
+			a.item_id = #{itemParentId} or a.item_id=#{itemId}
+		 group by name
+		ORDER BY a.sort ASC
+	</select>
+	
+	<select id="getHeadLevel" resultType="Integer">
+		SELECT 
+			IFNULL(Max(a.level),0)
+		FROM opa_scheme_item a
+		WHERE  
+		a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="schemeId != null and schemeId != ''">
+			AND a.scheme_id = #{schemeId}
+		</if>
+	</select>
+	
+	<select id="findList" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if>
+			<if test="itemParentId != null and itemParentId != ''">
+				AND a.item_parent_id = #{itemParentId}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+			<if test="ifNum != null and ifNum != ''">
+				AND a.if_num = #{ifNum}
+			</if>
+			<if test="dateFrom != null and dateFrom != ''">
+				AND a.date_from &gt;= #{dateFrom}
+			</if>
+			<if test="dateTo != null and dateTo != ''">
+				AND a.date_to &lt;= #{dateTo}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			AND a.remarks not in (-1,-2,-3)
+		</where>
+		ORDER BY a.sort ASC
+	</select>
+	<!-- 查询列表数据  除去多余重复 -->
+	<select id="getFindList" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if>
+			<!-- <if test="itemParentId != null and itemParentId != ''">
+				AND a.item_parent_id = #{itemParentId}
+			</if> -->
+			AND a.item_parent_ids like concat('0','%')
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+			<if test="ifNum != null and ifNum != ''">
+				AND a.if_num = #{ifNum}
+			</if>
+			<if test="dateFrom != null and dateFrom != ''">
+				AND a.date_from &gt;= #{dateFrom}
+			</if>
+			<if test="dateTo != null and dateTo != ''">
+				AND a.date_to &lt;= #{dateTo}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			AND a.remarks not in (-1,-2,-3)
+		</where>
+		GROUP BY a.name
+	</select>
+	
+	
+	
+	
+	
+	
+	<!--汇总表查询  根据关联部门表来查出 所有的指标     除去多余重复 -->
+	<select id="getSummaryList" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		LEFT JOIN opa_scheme s ON s.id = a.scheme_id
+		LEFT JOIN sys_office oa ON oa.id = a.auditor_office_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_office_id
+		LEFT JOIN summary_office_role e on e.Association_office_id = a.AUDITOR_OFFICE_ID
+		<where>
+			a.del_flag = '0'
+			AND e.Identification_symbo=#{Identificationsymbo}
+			<!-- <if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if> -->
+			AND a.remarks not in (-1,-2,-3)
+		</where>
+		GROUP BY a.name
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="findAllList" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	 <select id="findChild" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			 <if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if> 
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>
+		</where>
+		ORDER BY a.sort ASC
+	</select> 
+	<!-- <select id="findChild" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND a.ITEM_PARENT_IDS like concat('0','%')
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>
+		</where>
+		GROUP BY a.ITEM_ID
+		ORDER BY a.sort ASC
+	</select> -->
+	<insert id="insert">
+		INSERT INTO opa_scheme_item(
+			id,
+			scheme_id,
+			item_id,
+			item_parent_id,
+			item_parent_ids,
+			code,
+			name,
+			type,
+			level,
+			content,
+			method,
+			if_num,
+			value,
+			count,
+			sort,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			remarks,
+			examination,
+			auditor_office_id
+		) VALUES (
+			#{id},
+			#{schemeId},
+			#{itemId},
+			#{itemParentId},
+			#{itemParentIds},
+			#{code},
+			#{name},
+			#{type},
+			#{level},
+			#{content},
+			#{method},
+			#{ifNum},
+			#{value},
+			#{count},
+			#{sort},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditorId},
+			#{status},
+			#{remarks},
+			#{examination},
+			#{auditorOfficeId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_scheme_item SET 	
+			scheme_id = #{schemeId},
+			item_id = #{itemId},
+			item_parent_id = #{itemParentId},
+			item_parent_ids = #{itemParentIds},
+			code = #{code},
+			name = #{name},
+			type = #{type},
+			level = #{level},
+			content = #{content},
+			method = #{method},
+			if_num = #{ifNum},
+			value = #{value},
+			count = #{count},
+			sort = #{sort},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditorId},
+			status = #{status},
+			remarks = #{remarks},
+			auditor_office_id = #{auditorOfficeId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_scheme_item SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findNotPassList" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status != #{status}
+			</if>
+		</where>
+	</select>
+	
+	<select id="schemefindList" resultType="OpaSchemeItem">
+	   SELECT
+	    a.id AS "id",
+		a.scheme_id AS "schemeId",
+		a.item_id AS "itemId",
+		a.item_parent_id AS "itemParentId",
+		a.item_parent_ids AS "itemParentIds",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.level AS "level",
+		a.content AS "content",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.count AS "count",
+		a.sort AS "sort",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		a.auditor_office_id AS "auditorOfficeId",
+		a.examination AS"examination"
+		FROM opa_scheme_item a
+		WHERE a.scheme_id=#{schemeId}
+	</select>
+	
+	
+	<update id="setAllToStatus">
+		UPDATE opa_scheme_item SET 	
+			status = #{status}
+		WHERE scheme_id = #{schemeId}
+	</update>
+	
+	<select id="findListForAssign" resultType="OpaSchemeItem">
+		SELECT 
+			<include refid="opaSchemeItemColumns"/>
+		FROM opa_scheme_item a
+		<include refid="opaSchemeItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if>
+			<if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+		</where>
+		 ORDER BY a.level ASC 
+	</select>
+	<update id="editAssign">
+		UPDATE 
+			opa_scheme_item 
+		SET 	
+			update_by = #{updateBy},
+			update_date = #{updateDate},
+			auditor_id = #{auditorId},
+			auditor_office_id = #{auditorOfficeId},
+			status = #{status}
+		WHERE 
+			id 
+		IN 
+		<foreach collection="ids" item="item" open="(" close=")" separator=",">
+			#{item}
+		</foreach>
+	</update>
+	
+	<update id="updateAllByStatus" parameterType="java.util.List">
+	  UPDATE 
+	      opa_scheme_item
+	  SET
+	      status='2'
+	  WHERE
+	      scheme_id=#{schemeId}
+	  <!--IN
+	 
+	   <foreach collection="schemeIds" item="schemeId" open="(" close=")" separator=",">
+	    #{schemeId}
+	    </foreach>  -->
+	</update>
+	
+	<select id="getChildSum" resultType="Double">
+		SELECT 
+			IFNULL(SUM(a.value),0) AS childSum
+		FROM opa_scheme_item a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+			</if>
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>	
+		</where>		
+	</select>
+	
+	<select id="fenpei" resultType="OpaSchemeItem">
+	   select 
+	    a.id AS "id",
+		a.scheme_id AS "schemeId",
+		a.item_id AS "itemId",
+		a.item_parent_id AS "itemParentId",
+		a.item_parent_ids AS "itemParentIds",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.level AS "level",
+		a.content AS "content",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.count AS "count",
+		a.sort AS "sort",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		
+	   from opa_scheme_item a
+	    LEFT JOIN opa_scheme s ON s.id = a.scheme_id
+		LEFT JOIN sys_office oa ON oa.id = a.auditor_office_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_id
+	</select>
+</mapper>

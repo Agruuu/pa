@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaAssociationDao">
+    <sql id="opaAssociationaColumns">
+    a.id AS "id",
+    a.scheme_id AS "schemeId",
+    a.item_id AS "itemId",
+    a.office_id AS "officeId",
+    a.date_from AS "dateFrom",
+    a.date_to AS "dateTo",
+    a.create_by AS "createBy",
+    a.create_date AS "createDate",
+    a.del_flag AS "delFlag",
+    a.value AS "value",
+    a.count AS "count"
+    </sql>
+    <select id="get" resultType="OpaAssociation">
+    SELECT
+     <include refid="opaAssociationaColumns"/>
+    FROM opa_association a
+    WHERE a.id = #{id}
+    </select>
+    
+    <select id="findList" resultType="OpaAssociation">
+    SELECT
+    a.id AS "id",
+    a.scheme_id AS "schemeId",
+    a.item_id AS "itemId",
+    a.office_id AS "officeId",
+    a.date_from AS "dateFrom",
+    a.date_to AS "dateTo",
+    a.create_by AS "createBy",
+    a.create_date AS "createDate",
+    a.del_flag AS "delFlag",
+    a.value AS "value",
+    a.count AS "count"
+     FROM opa_association a
+     <where>
+     a.del_flag = #{DEL_FLAG_NORMAL}
+         <if test="schemeId != null and schemeId != ''">
+				AND a.scheme_id = #{schemeId}
+	     </if>
+	     <if test="dateFrom != null and dateFrom != ''">
+				AND a.date_from &gt;= #{dateFrom}
+			</if>
+			<if test="dateTo != null and dateTo != ''">
+				AND a.date_to &lt;= #{dateTo}
+			</if>
+     </where>
+    </select>
+    
+    <insert id="insert">
+    INSERT INTO opa_association(
+    id,
+    scheme_id,
+    item_id,
+    office_id,
+    count,
+    del_flag,
+    date_from,
+    date_to,
+    create_by,
+    create_date,
+    value
+    )VALUES(
+    #{id},
+    #{schemeId},
+    #{itemId},
+    #{officeId},
+    #{count},
+    #{delFlag},
+    #{dateFrom},
+    #{dateTo},
+    #{createBy.id},
+    #{createDate},
+    #{value}
+    )
+    </insert>
+    
+    <update id="delete">
+    DELETE opa_association SET del_flag = #{DEL_FLAG_DELETE} WHERE id = #{id}
+    </update>
+
+</mapper>

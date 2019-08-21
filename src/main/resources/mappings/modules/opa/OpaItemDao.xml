@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaItemDao">
+    
+	<sql id="opaItemColumns">
+		a.id AS "id",
+		a.type AS "type",
+		a.level AS "level",
+		a.code AS "code",
+		a.sort AS "sort",
+		a.name AS "name",
+		a.parent_id AS "parent.id",
+		a.parent_ids AS "parentIds",
+		a.del_flag AS "delFlag",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		u.name AS "createBy.name"
+	</sql>
+	
+	<sql id="opaItemJoins">
+		LEFT JOIN sys_user u ON u.id = a.create_by
+	</sql>
+	
+	<select id="get" resultType="OpaItem">
+		SELECT 
+			<include refid="opaItemColumns"/>
+		FROM opa_item a
+		<include refid="opaItemJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OpaItem">
+		SELECT 
+			<include refid="opaItemColumns"/>
+		FROM opa_item a
+		<include refid="opaItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="parent != null and parent.id != null and parent.id != ''">
+				AND a.parent_id = #{parent.id}
+			</if>
+			<if test="parentIds != null and parentIds != ''">
+				AND a.parent_ids LIKE 
+					<if test="dbName == 'oracle'">'%'||#{parentIds}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{parentIds}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{parentIds},'%')</if>
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			  AND a.remarks not in(-1,-2)
+		</where>
+		ORDER BY a.sort ASC
+	</select>
+	
+	
+	
+	<select id="itemFindList" resultType="OpaItem">
+	    SELECT 
+	         id,
+	         name,
+	         parent_id AS "parent.id",
+	         parent_ids AS "parent.ids",
+	         level
+	    FROM opa_item
+	    <where>
+	    AND id=#{id}
+	      AND remarks not in(-1,-2)
+	      </where>
+	      ORDER BY sort ASC
+	</select>
+	
+	<!-- 查询指标的所有层级 -->
+	<select id="getHeadLevel" resultType="OpaItem">
+		SELECT 
+		    a.id,
+			a.level
+		FROM opa_item a
+		WHERE  
+		a.del_flag = 0
+		AND a.remarks not in(-1,-2)
+	</select>
+	
+	
+	
+	
+	<select id="findAllList" resultType="OpaItem">
+		SELECT 
+			<include refid="opaItemColumns"/>
+		FROM opa_item a
+		<include refid="opaItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		ORDER BY a.sort ASC
+	</select>
+	
+	<select id="findByParentIdsLike" resultType="OpaItem">
+		SELECT
+			a.id,
+			a.parent_id AS "parent.id",
+			a.parent_ids
+		FROM opa_item a
+		<include refid="opaItemJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND a.parent_ids LIKE #{parentIds}
+		</where>
+		ORDER BY a.sort ASC
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO opa_item(
+			id,
+			type,
+			level,
+			code,
+			sort,
+			name,
+			parent_id,
+			parent_ids,
+			del_flag,
+			date_from,
+			date_to,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks
+		) VALUES (
+			#{id},
+			#{type},
+			#{level},
+			#{code},
+			#{sort},
+			#{name},
+			#{parent.id},
+			#{parentIds},
+			#{delFlag},
+			#{dateFrom},
+			#{dateTo},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_item SET 	
+			type = #{type},
+			sort = #{sort},
+			name = #{name},
+			parent_id = #{parent.id},
+			parent_ids = #{parentIds},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="updateParentIds">
+		UPDATE opa_item SET 
+			parent_id = #{parent.id}, 
+			parent_ids = #{parentIds}
+		WHERE id = #{id}
+	</update>
+	
+	<!-- <update id="delete">
+		UPDATE opa_item SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id} OR parent_ids LIKE '%,'||#{id}||',%'
+	</update> -->
+	<update id="delete">
+		UPDATE opa_item SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id} 
+	</update>
+	<select id="findTreeByIdLike" resultType="OpaItem">
+		SELECT 
+			<include refid="opaItemColumns"/>
+		FROM 
+			opa_item a
+			<include refid="opaItemJoins"/>
+		WHERE 
+			a.id = #{id} 
+		OR 
+			a.parent_ids 
+		LIKE CONCAT('%',#{id},'%')
+	</select>
+</mapper>

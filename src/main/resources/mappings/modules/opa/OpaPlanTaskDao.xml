@@ -1,0 +1,675 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaPlanTaskDao">
+    
+	<sql id="opaPlanTaskColumns">
+		a.id AS "id",
+		a.plan_id AS "planId",
+		a.office_id AS "office.id",
+		a.item_id AS "itemId",
+		a.item_parent_id AS "itemParentId",
+		a.item_parent_ids AS "itemParentIds",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.level AS "level",
+		a.content AS "content",
+		a.attached_path AS "attachedPath",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.score AS "score",
+		a.count AS "count",
+		a.result AS "result",
+		a.sort AS "sort",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		o.name AS "office.name",
+		u.name AS "auditorName",
+		a.auditor_office_id AS "auditorOfficeId",
+		oa.name AS "auditorOfficeName",
+		e.examination AS examination
+	</sql>
+	
+	<sql id="opaPlanTaskJoins">
+		LEFT JOIN sys_office o ON o.id = a.office_id
+		LEFT JOIN sys_office oa ON oa.id = a.auditor_office_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_id
+		LEFT JOIN opa_scheme e ON e.id= a.plan_id
+	</sql>
+    
+	<select id="get" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<select id="findList" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			 <if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if> 
+			<if test="code != null and code != ''">
+				AND a.code = #{code}
+			</if>
+			<if test="method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="itemParentId != null and itemParentId != ''">
+				AND a.item_parent_id = #{itemParentId}
+			</if>
+			<if test="ifNum != null and ifNum != ''">
+				AND a.if_num = #{ifNum}
+			</if>
+			<if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.sort, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	<select id="officeFindList" resultType="OpaPlanTask">
+	    SELECT 
+		<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+	  <where>
+	    a.del_flag = #{DEL_FLAG_NORMAL}
+	    <if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+	   </if>
+	   <if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+		</if>
+	  </where>
+	  <choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.sort
+			</otherwise>
+		</choose>  
+	</select>
+	
+	
+	<select id="findTaskList" resultType="OpaPlanTask">
+       SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			<!-- a.del_flag = #{DEL_FLAG_NORMAL} -->
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			 <if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{officeId}
+			</if> 
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.sort, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<!--  当点击上传资料模块 查询出所有当前部门的信息-->
+	<select id="allTaskList" resultType="OpaPlanTask">
+       SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			<!-- a.del_flag = #{DEL_FLAG_NORMAL} -->
+			 <if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.sort, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	
+	
+	
+	
+	<!-- 查询部门的指标状态 -->
+	<select id="getDepartStatus" resultType="OpaPlanTask">
+	    SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+	<where>
+	       a.del_flag='0'
+	       AND
+	       a.auditor_id=#{auditorId}
+	       AND
+	       a.status='1'
+	       AND
+	       a.plan_id = #{planId}
+	       AND
+	       NOT a.ITEM_PARENT_ID='0'
+	</where>
+	 ORDER BY a.sort, a.update_date DESC
+	</select>
+	
+	
+	
+	
+	
+	<select id="findAllList" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.sort, a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO opa_plan_task(
+			id,
+			plan_id,
+			office_id,
+			item_id,
+			item_parent_id,
+			item_parent_ids,
+			code,
+			name,
+			type,
+			level,
+			content,
+			attached_path,
+			method,
+			if_num,
+			value,
+			score,
+			count,
+			result,
+			sort,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			remarks,
+			auditor_office_id
+		) VALUES (
+			#{id},
+			#{planId},
+			#{office.id},
+			#{itemId},
+			#{itemParentId},
+			#{itemParentIds},
+			#{code},
+			#{name},
+			#{type},
+			#{level},
+			#{content},
+			#{attachedPath},
+			#{method},
+			#{ifNum},
+			#{value},
+			#{score},
+			#{count},
+			#{result},
+			#{sort},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditorId},
+			#{status},
+			#{remarks},
+			#{auditorOfficeId}
+		)
+	</insert>
+	<insert id="insert1">
+		INSERT INTO opa_plan_task(
+			id,
+			plan_id,
+			office_id,
+			item_id,
+			item_parent_id,
+			item_parent_ids,
+			code,
+			name,
+			type,
+			level,
+			content,
+			attached_path,
+			method,
+			if_num,
+			value,
+			score,
+			count,
+			result,
+			sort,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			remarks,
+			auditor_office_id
+		) VALUES (
+			#{id},
+			#{planId},
+			#{officeId},
+			#{itemId},
+			#{itemParentId},
+			#{itemParentIds},
+			#{code},
+			#{name},
+			#{type},
+			#{level},
+			#{content},
+			#{attachedPath},
+			#{method},
+			#{ifNum},
+			#{value},
+			#{score},
+			#{count},
+			#{result},
+			#{sort},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditorId},
+			#{status},
+			#{remarks},
+			#{auditorOfficeId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_plan_task SET 	
+			plan_id = #{planId},
+			office_id = #{office.id},
+			item_id = #{itemId},
+			item_parent_id = #{itemParentId},
+			item_parent_ids = #{itemParentIds},
+			code = #{code},
+			name = #{name},
+			type = #{type},
+			level = #{level},
+			content = #{content},
+			attached_path = #{attachedPath},
+			method = #{method},
+			if_num = #{ifNum},
+			value = #{value},
+			score = #{score},
+			count = #{count},
+			result = #{result},
+			sort = #{sort},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditorId},
+			status = #{status},
+			remarks = #{remarks},
+			auditor_office_id = #{auditorOfficeId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_plan_task SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<select id="getChildSum" resultType="Double">
+		SELECT 
+			IFNULL(SUM(a.value),0) AS childSum
+		FROM opa_plan_task a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>	
+		</where>		
+	</select>
+	<select id="findParentTask" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="itemParentId != null and itemParentId != ''">
+				AND a.item_id = #{itemParentId}
+			</if>
+		</where>
+	</select>
+	<select id="findChild" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>
+		</where>
+	</select>
+	<select id="findNotPassList" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status != #{status}
+			</if>
+		</where>
+	</select>
+	<select id="findCommonChild" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+			<if test="itemId != null and itemId != ''">
+				AND a.item_parent_id = #{itemId}
+			</if>
+		</where>
+	</select>
+	<select id="findTaskByMethod" resultType="OpaPlanTask">
+		SELECT 
+			<include refid="opaPlanTaskColumns"/>
+		FROM opa_plan_task a
+		<include refid="opaPlanTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planId != null and planId != ''">
+				AND a.plan_id = #{planId}
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="method != null and method != ''">
+				AND a.method = #{method}
+			</if>
+		</where>
+	</select>
+	
+	<update id="setAllToStatus">
+		UPDATE opa_plan_task SET 	
+			status = #{status}
+		<where> 
+			<if test="planId != null and planId != ''">
+				AND plan_id = #{planId}
+			</if>
+			<if test="method != null and method != ''">
+				AND method = #{method}
+			</if>
+		</where>
+	</update>
+	<select id="findListByStatus" resultType="com.orhon.pa.common.utils.Status">
+		SELECT 
+			a.id AS value,
+			a.name AS label
+		FROM opa_plan_task a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND
+			a.status IN
+			<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+				#{status}  
+			</foreach> 
+		</where>
+			ORDER BY a.sort, a.update_date DESC
+			
+	</select>
+	
+	<!-- 通过itemParentId为0时的数据 -->
+	<select id="getOneList" resultType="OpaPlanTask">
+		SELECT 
+		a.id AS "id",
+		a.plan_id AS "planId",
+		a.office_id AS "office.id",
+		a.item_id AS "itemId",
+		a.item_parent_id AS "itemParentId",
+		a.item_parent_ids AS "itemParentIds",
+		a.code AS "code",
+		a.name AS "name",
+		a.type AS "type",
+		a.level AS "level",
+		a.content AS "content",
+		a.attached_path AS "attachedPath",
+		a.method AS "method",
+		a.if_num AS "ifNum",
+		a.value AS "value",
+		a.score AS "score",
+		a.count AS "count",
+		a.result AS "result",
+		a.sort AS "sort",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks"
+		FROM opa_plan_task a
+		WHERE a.item_parent_id="0" and item_id=#{itemParentId}
+	</select>
+	
+	<insert id="insertSummaryOffice">
+	INSERT INTO opa_summary_office(ID,S_ID,DEPART_ID)
+	</insert>
+	
+	<!-- 过名称查询重复数据中itemId最小的记录 -->
+	<select id="getFindList" resultType="OpaPlanTask">
+	SELECT item_id,name,ITEM_PARENT_ID,ITEM_PARENT_IDS
+	    FROM opa_plan_task WHERE ITEM_ID=
+           (SELECT MIN(item_id) item_id FROM opa_plan_task WHERE name=#{name} AND plan_id=#{planId})
+	
+	</select>
+	
+	
+	<select id="taskFindList1" resultType="OpaPlanTask">
+	SELECT 
+	id AS "id",
+		plan_id AS "planId",
+		office_id AS "office.id",
+		item_id AS "itemId",
+		item_parent_id AS "itemParentId",
+		item_parent_ids AS "itemParentIds",
+		code AS "code",
+		name AS "name",
+		type AS "type",
+		level AS "level",
+		content AS "content",
+		attached_path AS "attachedPath",
+		method AS "method",
+		if_num AS "ifNum",
+		value AS "value",
+		score AS "score",
+		count AS "count",
+		result AS "result",
+		sort AS "sort",
+		date_from AS "dateFrom",
+		date_to AS "dateTo",
+		del_flag AS "delFlag",
+		create_by AS "createBy.id",
+		create_date AS "createDate",
+		update_by AS "updateBy.id",
+		update_date AS "updateDate",
+		auditor_id AS "auditorId",
+		status AS "status",
+		remarks AS "remarks"
+	 FROM opa_plan_task 
+	    <where>
+	     del_flag = #{delFlag}
+			<if test="auditorId != null and auditorId != ''">
+				AND auditor_id = #{auditorId}
+			</if>
+		</where>
+    </select>
+    
+    
+    
+    <select id="getDepartName" resultType="OpaPlanTask">
+        SELECT 
+        a.plan_id AS planId,
+        a.name AS name,
+        a.auditor_id AS auditorId,
+        l.value AS tableValue,
+        a.item_id AS itemId 
+        FROM opa_plan_task a
+    	LEFT JOIN summary_office_role e on e.Association_office_id = a.AUDITOR_ID
+        LEFT JOIN opa_summary_table l on l.value  = e.Identification_symbo 
+        WHERE a.plan_id=#{planId} 
+    </select>
+    
+    <!-- 
+          考核资料上传
+         根据当前登录部门查询指标名称 -->
+    <select id="zhibiaoName" resultType="com.orhon.pa.common.utils.Status">
+      SELECT
+          e.id AS value,
+          e.name AS label
+      FROM  opa_plan_task a
+      LEFT JOIN opa_scheme e ON e.ID=a.PLAN_ID
+        <where>
+          a.del_flag = #{DEL_FLAG_NORMAL}
+         <if test="auditorId != null and auditorId != ''">
+				AND a.auditor_id = #{auditorId}
+		</if>
+		 AND
+	   a.status IN
+	<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+			#{status}  
+	</foreach> 
+        </where>
+    </select>
+</mapper>

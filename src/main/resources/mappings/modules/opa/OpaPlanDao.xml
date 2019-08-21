@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.orhon.pa.modules.opa.dao.OpaPlanDao">
+    
+	<sql id="opaPlanColumns">
+		a.id AS "id",
+		a.scheme_id AS "schemeId",
+		a.office_parent_id AS "officeParentId",
+		a.code AS "code",
+		a.name AS "name",
+		a.level AS "level",
+		a.year AS "year",
+		a.cycle AS "cycle",
+		a.date_from AS "dateFrom",
+		a.date_to AS "dateTo",
+		a.del_flag AS "delFlag",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.auditor_id AS "auditorId",
+		a.status AS "status",
+		a.remarks AS "remarks",
+		o.name AS "officeParentName",
+		u.name AS "auditorName"
+	</sql>
+	
+	<sql id="opaPlanJoins">
+		LEFT JOIN sys_office o ON o.id = a.office_parent_id
+		LEFT JOIN sys_user u ON u.id = a.auditor_id
+	</sql>
+    
+	<select id="get" resultType="OpaPlan">
+		SELECT 
+			<include refid="opaPlanColumns"/>
+		FROM opa_plan a
+		<include refid="opaPlanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OpaPlan">
+		SELECT 
+			<include refid="opaPlanColumns"/>
+		FROM opa_plan a
+		<include refid="opaPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="officeParentId != null and officeParentId != ''">
+				AND a.office_parent_id = #{officeParentId}
+			</if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+			<if test="year != null and year != ''">
+				AND a.year = #{year}
+			</if>
+			<if test="cycle != null and cycle != ''">
+				AND a.cycle = #{cycle}
+			</if>
+			<if test="dateFrom != null and dateFrom != ''">
+				AND a.date_from &gt;= #{dateFrom}
+			</if>
+			<if test="dateTo != null and dateTo != ''">
+				AND a.date_to &lt;= #{dateTo}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OpaPlan">
+		SELECT 
+			<include refid="opaPlanColumns"/>
+		FROM opa_plan a
+		<include refid="opaPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO opa_plan(
+			id,
+			scheme_id,
+			office_parent_id,
+			code,
+			name,
+			level,
+			year,
+			cycle,
+			date_from,
+			date_to,
+			del_flag,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			auditor_id,
+			status,
+			remarks
+		) VALUES (
+			#{id},
+			#{schemeId},
+			#{officeParentId},
+			#{code},
+			#{name},
+			#{level},
+			#{year},
+			#{cycle},
+			#{dateFrom},
+			#{dateTo},
+			#{delFlag},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{auditorId},
+			#{status},
+			#{remarks}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE opa_plan SET 	
+			scheme_id = #{schemeId},
+			office_parent_id = #{officeParentId},
+			code = #{code},
+			name = #{name},
+			level = #{level},
+			year = #{year},
+			cycle = #{cycle},
+			date_from = #{dateFrom},
+			date_to = #{dateTo},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			auditor_id = #{auditorId},
+			status = #{status},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE opa_plan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findListByStatus" resultType="com.orhon.pa.common.utils.Status">
+		SELECT 
+			a.id AS value,
+			a.name AS label
+		FROM opa_plan a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			AND
+			a.status IN
+			<foreach item="status" index="index" collection="statusList" open="(" separator="," close=")">  
+				#{status}  
+			</foreach> 
+		</where>
+			ORDER BY a.update_date DESC
+			
+	</select>
+	
+</mapper>
